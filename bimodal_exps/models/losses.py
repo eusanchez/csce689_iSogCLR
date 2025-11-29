@@ -714,5 +714,43 @@ class onlineCLR_Loss(nn.Module):
 
         return loss
 
+class GCL_Margin_Loss(nn.Module):
+    def __init__(self, world_size=1, temperature=0.01, margin=0.2, lam=0.1):
+        super(GCL_Margin_Loss, self).__init__()
+        self.world_size = world_size
+        self.temperature = temperature
+        self.margin = margin
+        self.lam = lam
+
+    def forward(self, image_features, text_features):
+        # normalizar
+        image_features = F.normalize(image_features, dim=-1)
+        text_features  = F.normalize(text_features, dim=-1)
+
+        # matriz de similitudes
+        sim = image_features @ text_features.t()
+
+        # similitudes positivas (diagonal)
+        pos = sim.diag()
+
+        # negativos más difíciles
+        batch = sim.size(0)
+        mask = (~torch.eye(batch, dtype=torch.bool, device=sim.device))
+        neg_sim = sim[mask].view(batch, batch-1)
+        hardest_neg, _ = neg_sim.max(dim=1)
+
+        # penalización por margen
+        margin_term = F.relu(self.margin + hardest_neg - pos)
+
+        # CLIP InfoNCE original
+        logits_image = sim / self.temperature
+        logits_text  = sim.t() / self.temperature
+        labels = torch.arange(batch, device=sim.device)
+        clip_loss = (F.cross_entropy(logits_image, labels) +
+                     F.cross_entropy(logits_text, labels)) / 2
+
+        # loss final
+        final_loss = clip_loss + self.lam * margin_term.mean()
+        return final_loss
 
 

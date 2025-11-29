@@ -3,7 +3,7 @@ from functools import partial
 import timm
 from transformers import AutoModel, RobertaModel
 
-from models.losses import CLIP_Loss, CyCLIP_Loss, SogCLR_Loss, VICReg_Loss
+from models.losses import CLIP_Loss, CyCLIP_Loss, GCL_Margin_Loss, SogCLR_Loss, VICReg_Loss
 from models.losses import iSogCLR_New_v2_Loss, iSogCLR_New_v1_Loss, onlineCLR_Loss, iSogCLR_New_Loss
 
 import torch
@@ -80,6 +80,10 @@ class CLIP(nn.Module):
 
         elif self.ita_type == 'vicreg':
             self.criterion = VICReg_Loss(world_size=world_size, dim_size=embed_dim, sim_coeff=vicreg_sim_coeff, std_coeff=vicreg_std_coeff)
+
+        elif self.ita_type == 'gcl_margin':
+            self.criterion = GCL_Margin_Loss(world_size=world_size, temperature=self.temp, margin=0.2, lam=0.1)
+
 
         elif self.ita_type == 'sogclr':
             # self.criterion = SogCLR_Loss(world_size=world_size, gamma=sogclr_gamma, temperature=self.temp, bsz=bsz, enable_surrogate=enable_surrogate, 
