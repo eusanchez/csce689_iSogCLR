@@ -118,6 +118,10 @@ def create_optimizer(args, model, filter_bias_and_bn=True):
     elif opt_lower == 'fusednovograd':
         opt_args.setdefault('betas', (0.95, 0.98))
         optimizer = FusedNovoGrad(parameters, **opt_args)
+    elif opt_lower == 'lion':
+        from .lion import Lion
+        opt_args.pop('eps', None)
+        optimizer = Lion(parameters, lr=args.lr, weight_decay=args.weight_decay)
     else:
         assert False and "Invalid optimizer"
         raise ValueError
