@@ -210,6 +210,22 @@ class CLIP(nn.Module):
             info_dict['avg_text_tau'] = 0.0
             info_dict['avg_image_tau'] = 0.0
 
+        elif self.ita_type == 'gcl_margin':
+            # GCL-Margin uses normalized embeddings, not features
+            # The loss already computes both directions internally
+            loss_ita = self.criterion(image_feat, text_feat)
+
+            # Fill info_dict with all expected keys
+            info_dict['avg_image_tau'] = 0.0
+            info_dict['avg_text_tau'] = 0.0
+            info_dict['cur_eta'] = 0.0
+            info_dict['grad_tau_image'] = 0.0
+            info_dict['grad_tau_text'] = 0.0
+            info_dict['b_I'] = 0.0
+            info_dict['b_T'] = 0.0
+            info_dict['v'] = 0.0
+            info_dict['lamda'] = 0.0
+
         else:
             raise NotImplementedError
 
